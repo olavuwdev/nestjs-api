@@ -1,1 +1,14 @@
-GET http://localhost:3000/places?text=r joao neponuceno de moura, alto do sumare , 490
+GET http://localhost:3000/places?text=r joao neponuceno ssde moura, alto do sumare , 490
+
+###
+GET http://localhost:3000/places?text=r Manoel batista neto, alto do sumare , 500
+
+###
+
+@originId=ChIJYYbfVNwHugcRMN7CNzVLHo0
+
+@destinationId=Ek9SLiBNYW5vZWwgQmF0aXN0YSBOZXRvLCA1MDAgLSBBbHRvIGRvIFN1bWFyw6ksIE1vc3NvcsOzIC0gUk4sIDU5NjMzLTcxNSwgQnJhc2lsIjESLwoUChIJYaOE8toHugcRpOwaf49rGEsQ9AMqFAoSCW1BNxPZB7oHEaNe6qHlHQ_n
+
+###
+
+GET http://localhost:3000/directions?originId={{originId}}&destinationId={{destinationId}}
