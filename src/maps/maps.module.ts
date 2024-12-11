@@ -10,6 +10,9 @@ import { DirectionsController } from './directions/directions.controller';
   providers: [PlacesService, {
     provide: GoogleMapsClient,
     useValue: new GoogleMapsClient(),
-  }, DirectionsService,]
+  }, 
+  DirectionsService
+],
+  exports:[DirectionsService],
 })
 export class MapsModule {}
