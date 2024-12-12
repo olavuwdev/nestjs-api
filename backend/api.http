@@ -20,7 +20,7 @@ POST http://localhost:3000/routes
 Content-Type: application/json
 
 {
-    "name": "ROTA 1",
+    "name": "ROTA 3",
     "source_id": "{{originId}}",
     "destination_id": "{{destinationId}}"
 }

@@ -1,3 +1,44 @@
+async function createRouteAction(formData: FormData) {
+    "use server";
+    console.log("Entrou na função")
+    const { sourceId, destinationId } = Object.fromEntries(formData);
+
+    const directionReponse = await fetch(
+        `http://localhost:3000/directions?originId=${sourceId}&destinationId=${destinationId}`
+    );
+    console.log(directionReponse.json())
+
+    if (!directionReponse.ok) {
+        throw new Error("Falha no fetch directionReponse CreateRouteAction");
+    };
+
+    const directionData = await directionReponse.json();
+
+    const startAddress = directionData.routes[0].legs[0].start_address;
+    const endAddress = directionData.routes[0].legs[0].end_address;
+
+    const response = await fetch("http://localhost:3000/routes",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "name": `${startAddress} - ${endAddress}`,
+                "source_id": directionData.request.origin.place_id.replace("place_id:", ""),
+                "destination_id": directionData.request.destination.place_id.replace("place_id:", "")
+            })
+
+        }
+    )
+    if (!response.ok) {
+        console.log(await response.text());
+
+        throw new Error("Falha ao criar a rota")
+    }
+}
+
+
 
 export async function searchDirection(source: string, destination: string) {
     const [searchReponse, destinationResponse] = await Promise.all([
@@ -18,6 +59,25 @@ export async function searchDirection(source: string, destination: string) {
         searchReponse.json(),
         destinationResponse.json()
     ]);
+
+    const placeSourceId = sourceData.candidates[0].place_id;
+    const placeDestinationId = destinationData.candidates[0].place_id;
+
+    const directionReponse = await fetch(
+        `http://localhost:3000/directions?originId=${placeSourceId}&destinationId=${placeDestinationId}`
+    );
+
+    if (!directionReponse.ok) {
+        throw new Error("Falha no fetch directionReponse")
+    };
+
+    const directionsData = await directionReponse.json();
+
+    return {
+        directionsData,
+        placeSourceId,
+        placeDestinationId
+    }
 }
 
 
@@ -28,6 +88,19 @@ export async function NewRoute({
     searchParams: Promise<{ source: string, destination: string }>
 }) {
     const { source, destination } = await searchParams;
+
+    const result = source && destination ? await searchDirection(source, destination) : null;
+
+    let directionsData = null
+    let placeSourceId = null
+    let placeDestinationId = null
+
+    if (result) {
+        directionsData = result.directionsData;
+        placeSourceId = result.placeSourceId.text;
+        placeDestinationId = result.placeDestinationId.text;
+
+    }
     return (
         <div className="flex flex-1 w-full h-full">
             <div className="w-1/3 p-4 h-full">
@@ -37,10 +110,11 @@ export async function NewRoute({
                 <form className="flex flex-col space-y-4" method="get">
                     <div className="relative">
                         <input
-                            type="text"
+                            type="search"
                             name="source"
                             id="source"
                             placeholder=""
+                            defaultValue={source}
                             className="block rounded-t-lg px-2.5 pb-2.5 pt-5 w-full text-sm text-contrast bg-default border-0 border-b-2 border-contrast appearance-none focus:outline-none focus:ring-0 focus:border-primary peer"
 
                         />
@@ -48,9 +122,10 @@ export async function NewRoute({
                     </div>
                     <div className="relative">
                         <input
-                            type="text"
+                            type="search"
                             name="destination"
                             id="destination"
+                            defaultValue={destination}
                             placeholder=""
                             className="block rounded-t-lg px-2.5 pb-2.5 pt-5 w-full text-sm text-contrast bg-default border-0 border-b-2 border-contrast appearance-none focus:outline-none focus:ring-0 focus:border-primary peer"
 
@@ -62,26 +137,52 @@ export async function NewRoute({
                         className="bg-main text-primary p-2 rounded text-xl font-bold">
                         Pesquisar
                     </button>
-                    <div className="mt-4 p-4 border rounded text-contrast">
-                        <ul>
-                            <li className="mb-2">
-                                <strong>Origem:</strong>{" "}
+                    {directionsData && (
+                        <div className="mt-4 p-4 border rounded text-contrast">
+                            <ul>
+                                <li className="mb-2">
+                                    <strong>Origem:</strong>{" "}
+                                    {directionsData.routes[0].legs[0].start_address}
+                                </li>
+                                <li className="mb-2">
+                                    <strong>Destino:</strong>{" "}
+                                    {directionsData.routes[0].legs[0].end_address}
+                                </li>
+                                <li className="mb-2">
+                                    <strong>Distância:</strong>{" "}
+                                    {directionsData.routes[0].legs[0].distance.text}
+                                </li>
+                                <li className="mb-2">
+                                    <strong>Duração:</strong>{" "}
+                                    {directionsData.routes[0].legs[0].duration.text}
+                                </li>
+                            </ul>
+                            <form action={createRouteAction} method="post">
+                                {placeSourceId && (
+                                    <input
+                                        type="hidden"
+                                        name="sourceId"
+                                        defaultValue={placeSourceId}
+                                    />
+                                )}
+                                {placeDestinationId && (
+                                    <input
+                                        type="hidden"
+                                        name="destinationId"
+                                        defaultValue={placeDestinationId}
+                                    />
+                                )}
+                                <button
+                                    type="submit"
+                                    className="bg-main text-primary p-2 rounded text-xl font-bold">
+                                    Adicionar rota
+                                </button>
 
-                            </li>
-                            <li className="mb-2">
-                                <strong>Destino:</strong>{" "}
 
-                            </li>
-                            <li className="mb-2">
-                                <strong>Distância:</strong>{" aa"}
+                            </form>
+                        </div>
+                    )}
 
-                            </li>
-                            <li className="mb-2">
-                                <strong>Duração:</strong>{" "}
-
-                            </li>
-                        </ul>
-                    </div>
 
 
                 </form>
@@ -90,5 +191,6 @@ export async function NewRoute({
         </div>
     )
 }
+
 
 export default NewRoute;
