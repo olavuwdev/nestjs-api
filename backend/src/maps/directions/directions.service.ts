@@ -32,13 +32,12 @@ export class DirectionsService {
                     },
                 },
                 destination:{
-                    origin:{
-                        place_id: requestParams.destination,
-                        location: {
-                            lat:data.routes[0].legs[0].end_location.lat,
-                            lng:data.routes[0].legs[0].end_location.lng
-                        },
-                            },
+                    place_id: requestParams.destination,
+                    location: {
+                        lat:data.routes[0].legs[0].end_location.lat,
+                        lng:data.routes[0].legs[0].end_location.lng
+                    },
+                            
                 mode:requestParams.mode
             },
         }

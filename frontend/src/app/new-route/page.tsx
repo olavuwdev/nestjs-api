@@ -1,43 +1,4 @@
-async function createRouteAction(formData: FormData) {
-    "use server";
-    console.log("Entrou na função")
-    const { sourceId, destinationId } = Object.fromEntries(formData);
-
-    const directionReponse = await fetch(
-        `http://localhost:3000/directions?originId=${sourceId}&destinationId=${destinationId}`
-    );
-    console.log(directionReponse.json())
-
-    if (!directionReponse.ok) {
-        throw new Error("Falha no fetch directionReponse CreateRouteAction");
-    };
-
-    const directionData = await directionReponse.json();
-
-    const startAddress = directionData.routes[0].legs[0].start_address;
-    const endAddress = directionData.routes[0].legs[0].end_address;
-
-    const response = await fetch("http://localhost:3000/routes",
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                "name": `${startAddress} - ${endAddress}`,
-                "source_id": directionData.request.origin.place_id.replace("place_id:", ""),
-                "destination_id": directionData.request.destination.place_id.replace("place_id:", "")
-            })
-
-        }
-    )
-    if (!response.ok) {
-        console.log(await response.text());
-
-        throw new Error("Falha ao criar a rota")
-    }
-}
-
+import { NewRouteForm } from "./newRouteForm";
 
 
 export async function searchDirection(source: string, destination: string) {
@@ -90,15 +51,14 @@ export async function NewRoute({
     const { source, destination } = await searchParams;
 
     const result = source && destination ? await searchDirection(source, destination) : null;
-
     let directionsData = null
     let placeSourceId = null
     let placeDestinationId = null
 
     if (result) {
         directionsData = result.directionsData;
-        placeSourceId = result.placeSourceId.text;
-        placeDestinationId = result.placeDestinationId.text;
+        placeSourceId = result.placeSourceId;
+        placeDestinationId = result.placeDestinationId;
 
     }
     return (
@@ -137,6 +97,7 @@ export async function NewRoute({
                         className="bg-main text-primary p-2 rounded text-xl font-bold">
                         Pesquisar
                     </button>
+                    </form>
                     {directionsData && (
                         <div className="mt-4 p-4 border rounded text-contrast">
                             <ul>
@@ -157,7 +118,7 @@ export async function NewRoute({
                                     {directionsData.routes[0].legs[0].duration.text}
                                 </li>
                             </ul>
-                            <form action={createRouteAction} method="post">
+                            <NewRouteForm>
                                 {placeSourceId && (
                                     <input
                                         type="hidden"
@@ -177,15 +138,13 @@ export async function NewRoute({
                                     className="bg-main text-primary p-2 rounded text-xl font-bold">
                                     Adicionar rota
                                 </button>
-
-
-                            </form>
+                                </NewRouteForm>
                         </div>
                     )}
 
 
 
-                </form>
+                
             </div>
             <div>mapa</div>
         </div>
